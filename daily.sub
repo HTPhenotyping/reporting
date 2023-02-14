@@ -1,0 +1,26 @@
+# Run on the access point, periodically.
+
+universe = local
+executable = daily.py
+
+cron_minute = 30
+cron_hour = 5
+on_exit_remove = false
+on_exit_hold = (ExitCode != 0) || (ExitBySignal)
+on_exit_hold_reason = "Abnormal exit"
+periodic_release = (time() - EnteredCurrentStatus) > 3600
+
+# Specify the job's resource requirements, etc.
+
+request_cpus = 1
+request_memory = 128M
+request_disk = 128M
+
+log = daily.log
+output = daily.out
+error = daily.err
+
+JobBatchName = daily-report
++HT_Phenotyping_Daily_Report = true
+
+queue 1
