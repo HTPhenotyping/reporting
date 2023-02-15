@@ -67,7 +67,7 @@ def get_s3_client() -> minio.Minio:
     with open(S3_CONFIG_FILE, encoding="utf-8") as fp:
         config = json.load(fp)
     return minio.Minio(
-        config["url"],
+        config["host"],
         access_key=config["accessKey"],
         secret_key=config["secretKey"],
     )
