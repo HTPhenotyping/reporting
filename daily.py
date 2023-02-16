@@ -170,21 +170,24 @@ def get_html_message(
     current: Snapshot,
 ) -> Tuple[str, int, int]:
     """
-    Compares the two snapshots and returns an html message and summary data.
+    Compares two snapshots and returns an html message and summary data.
     """
 
     message = ""
 
-    num_style = "font-family: monospace; text-align: right;"
+    numeric = "font-family: monospace; text-align: right;"
     padding = "padding-left: 0.5em; padding-right: 0.5em;"
     table_start = textwrap.dedent(
         """\
         <table>
+        <thead>
         <tr style="background-color: #eee">
             <th>Collaborator</th>
             <th colspan="2">Files</th>
             <th colspan="2">Size</th>
         </tr>
+        </thead>
+        <tbody>
         """
     )
 
@@ -193,9 +196,8 @@ def get_html_message(
     delta = datetime.timedelta(seconds=new_time - old_time)
 
     if delta:
-        days = delta.days
-        hours = delta.seconds // 3600
-        message += f"<p>In the past {days} days and {hours} hours...</p>\n"
+        hours = int(round(delta.days * 24 + delta.seconds / 3600, 0))
+        message += f"<p>In the past {hours} hours...</p>\n"
     else:
         message += textwrap.dedent(
             """\
@@ -233,17 +235,17 @@ def get_html_message(
 
         i += 1
         if (i % 2) == 0:
-            message += '<tr style="background-color: #dfd">'
+            message += '<tr style="background-color: #dfd">\n'
         else:
-            message += "<tr>"
+            message += "<tr>\n"
 
         message += textwrap.dedent(
             f"""\
             <td style="{padding}">{name}</td>
-            <td style="{padding}{num_style}">{f:,}</td>
-            <td style="{padding}{num_style}">{df:+,}</td>
-            <td style="{padding}{num_style}">{h:,.1f} {si}</td>
-            <td style="{padding}{num_style}">{dh:+,.1f} {dsi}</td>
+            <td style="{padding}{numeric}">{f:,}</td>
+            <td style="{padding}{numeric}">{df:+,}</td>
+            <td style="{padding}{numeric}">{h:,.1f} {si}</td>
+            <td style="{padding}{numeric}">{dh:+,.1f} {dsi}</td>
             </tr>
             """
         )
@@ -251,14 +253,21 @@ def get_html_message(
     (total_h, total_si) = get_si_suffix(total_b)
     (total_dh, total_dsi) = get_si_suffix(total_db)
 
+    i += 1
+    if (i % 2) == 0:
+        message += '<tr style="background-color: #dfd">\n'
+    else:
+        message += "<tr>\n"
+
     message += textwrap.dedent(
         f"""\
         <td style="{padding}"><b>Total</b></td>
-        <td style="{padding}{num_style}">{total_f:,}</td>
-        <td style="{padding}{num_style}">{total_df:+,}</td>
-        <td style="{padding}{num_style}">{total_h:,.1f} {total_si}</td>
-        <td style="{padding}{num_style}">{total_dh:+,.1f} {total_dsi}</td>
+        <td style="{padding}{numeric}">{total_f:,}</td>
+        <td style="{padding}{numeric}">{total_df:+,}</td>
+        <td style="{padding}{numeric}">{total_h:,.1f} {total_si}</td>
+        <td style="{padding}{numeric}">{total_dh:+,.1f} {total_dsi}</td>
         </tr>
+        </tbody>
         </table>
         """
     )
@@ -266,11 +275,10 @@ def get_html_message(
     return (message, total_df, total_db)
 
 
-def send_email(previous, current):
+def send_email(previous: Snapshot, current: Snapshot) -> None:
     """
-    ???
+    Compares two snapshots and sends an email.
     """
-    # XXX
 
     now = current["*"]["start_time"]
     today = datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d")
@@ -296,6 +304,7 @@ def send_email(previous, current):
     message.attach(part1)
     message.attach(part2)
 
+    logging.debug(html)
     logging.debug(plain)
 
     context = ssl.create_default_context()
@@ -313,13 +322,17 @@ def main() -> None:
     send_email(p, c)
 
 
-if __name__ == "__main__":
+def entrypoint() -> None:
     try:
         logging.basicConfig(
             format="%(asctime)s ~ %(message)s",
             level=logging.DEBUG,
         )
         main()
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception:  # pylint: disable=broad-except
         logging.exception("Uncaught exception")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    entrypoint()
