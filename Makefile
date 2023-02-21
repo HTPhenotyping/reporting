@@ -3,7 +3,7 @@
 
 .PHONY: all build clean lint reformat
 
-PY_FILES := daily.py
+PY_FILES := daily.py verify.py
 PY_WHEEL_BASENAME := htpheno_reporting
 
 all: reformat lint build
