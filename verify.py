@@ -125,15 +125,15 @@ def do_convert(args: argparse.Namespace) -> None:
     db.execute(
         """
         CREATE TABLE data(
-            path STR PRIMARY KEY,
+            path TEXT PRIMARY KEY,
             mode INT,
             uid INT,
             gid INT,
             mtime REAL,
             size INT,
-            digest STR
+            digest TEXT
         )
-        """
+        """  # STRICT  # available starting with SQLite 3.37
     )
 
     rows_seen = 0
